@@ -13,6 +13,7 @@ class NotepadBot(DesktopBot):
             for post in posts:
                 self.write_post(post)
                 self.save_post(post)
+                self.close_notepad()
                 break
     def open_notepad(self):
         self.load_images()
@@ -33,6 +34,10 @@ class NotepadBot(DesktopBot):
             self.type_keys(["win", "r"])
             self.type_keys("notepad")
             self.key_enter()
+
+    def close_notepad(self):
+        self.get_notepad_window()
+        self.type_keys(["ctrl", "shift", "w"])
 
     def load_images(self):
         images_path = get_resource_path("images")
