@@ -99,8 +99,8 @@ class NotepadBot(DesktopBot):
         self.key_enter()
         
         # Wait a moment for potential "Confirm Save As" dialog
-        sleep(1)
-        self.handle_dialogs() # Handle confirm overwrite if exists
+        if self.wait_for_window("Confirm Save As", timeout=2):
+            self.type_keys(["alt", "y"])
 
     def wait_for_window(self, title, timeout=10):
         """Wait for a window with specific title to appear."""
