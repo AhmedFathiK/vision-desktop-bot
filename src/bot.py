@@ -12,9 +12,8 @@ class NotepadBot(DesktopBot):
             posts = get_posts()[:5]
             for post in posts:
                 self.write_post(post)
+                self.save_post(post)
                 break
-                #self.save_post(post)
-
     def open_notepad(self):
         self.load_images()
         self.show_desktop()
@@ -53,14 +52,19 @@ class NotepadBot(DesktopBot):
 
     def write_post(self, post):
         self.get_notepad_window()
-        self.kb_type(f"Title: {post['title']}")
+        self.paste(f"Title: {post['title']}")
         self.key_enter()
         self.key_enter()
-        self.kb_type(post["body"])
+        self.paste(post["body"])
         
     def save_post(self, post):
         self.get_notepad_window()
         self.type_keys(["ctrl", "shift", "s"])
         sleep(3)
-        self.kb_type(f"post_{post['id']}.txt")
+        self.paste(os.path.join(self.get_target_folder(), f"post_{post['id']}.txt"))
         self.key_enter()
+
+    def get_target_folder(self):
+        folder = os.path.join(os.path.expanduser("~"), "Desktop", "tjm-project")
+        os.makedirs(folder, exist_ok=True)
+        return folder
