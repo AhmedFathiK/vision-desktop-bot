@@ -10,9 +10,10 @@ class NotepadBot(DesktopBot):
 
     def start(self):
         self.load_images()
-        self.open_notepad()
         posts = get_posts()[:5]
         for post in posts:
+            self.open_notepad()
+            self.type_keys(["ctrl", "n"]) # Ensure new tab
             self.write_post(post)
             self.save_post(post)
             self.close_notepad()
@@ -41,18 +42,39 @@ class NotepadBot(DesktopBot):
             raise Exception("Failed to open Notepad: Window not found within timeout.")
 
     def wait_for_notepad_window(self, timeout=10):
-        """Wait for Notepad window to appear."""
+        """Wait for Notepad window to appear, handling potential error dialogs."""
         print("Waiting for Notepad to open...")
         start_time = time.time()
         while (time.time() - start_time) < timeout:
-            windows = gw.getWindowsWithTitle(" - Notepad")
-            if not windows:
+            # Check for error dialogs first (e.g., "Cannot find the ... file")
+            # These usually have the title "Notepad" and are small in size
+            try:
                 windows = gw.getWindowsWithTitle("Notepad")
+                for window in windows:
+                    # Heuristic: Error dialogs are typically small (height < 300) and have title "Notepad"
+                    if window.title == "Notepad" and window.height < 300:
+                        print(f"Dismissing error dialog: '{window.title}' (Size: {window.width}x{window.height})")
+                        window.activate()
+                        self.key_enter()
+                        sleep(0.5)
+            except Exception as e:
+                print(f"Error handling potential dialog: {e}")
+
+            # Now check for the main Notepad window
+            main_windows = gw.getWindowsWithTitle(" - Notepad")
+            if not main_windows:
+                # Fallback: Check for windows titled "Notepad" that are likely the main window (larger size)
+                candidates = gw.getWindowsWithTitle("Notepad")
+                main_windows = [w for w in candidates if w.height >= 300]
             
-            if windows:
-                print("Notepad opened successfully.")
-                windows[0].activate()
-                return True
+            if main_windows:
+                print(f"Notepad opened successfully: {main_windows[0].title}")
+                try:
+                    main_windows[0].activate()
+                    return True
+                except Exception as e:
+                    print(f"Failed to activate main window: {e}")
+            
             sleep(1)
         print("Timeout waiting for Notepad.")
         return False
