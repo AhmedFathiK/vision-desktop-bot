@@ -13,11 +13,16 @@ class NotepadBot(DesktopBot):
         self.load_images()
         posts = get_posts()[:5]
         for post in posts:
-            self.open_notepad()
-            self.type_keys(["ctrl", "n"]) # Ensure new tab
-            self.write_post(post)
-            self.save_post(post)
-            self.close_notepad()
+            print(f"Processing post {post['id']}...")
+            try:
+                self.open_notepad()
+                self.type_keys(["ctrl", "n"]) # Ensure new tab
+                self.write_post(post)
+                self.save_post(post)
+            except Exception as e:
+                print(f"[ERROR] Failed to process post {post['id']}: {e}")
+            finally:
+                self.close_notepad()
                 
     def open_notepad(self):
         self.show_desktop()
@@ -136,7 +141,7 @@ class NotepadBot(DesktopBot):
         # Note: The dialog title is usually "Save As" in English Windows
         if not self.wait_for_window("Save As", timeout=5):
              print("[ERROR] 'Save As' dialog did not appear.")
-             return
+             raise Exception("'Save As' dialog missing")
 
         # Ensure we are focused on the file name input
         self.paste(os.path.join(self.get_target_folder(), f"post_{post['id']}.txt"))
