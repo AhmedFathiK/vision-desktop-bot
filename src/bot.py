@@ -1,7 +1,7 @@
 from botcity.core import DesktopBot
-from api import get_posts
-from utils import get_resource_path
-from dialogs import handle_dialogs
+from .api import get_posts
+from .utils import get_resource_path
+from .dialogs import handle_dialogs
 import pygetwindow as gw
 import os
 import time

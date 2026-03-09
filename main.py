@@ -1,4 +1,4 @@
-from bot import NotepadBot
+from src.bot import NotepadBot
 
 if __name__ == "__main__":
     try:
