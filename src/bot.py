@@ -6,16 +6,21 @@ import pygetwindow as gw
 import os
 import time
 from time import sleep
+import cv2
+import numpy as np
 
 class NotepadBot(DesktopBot):
 
     def start(self):
         self.load_images()
+        # Create debug directory for annotated screenshots
+        os.makedirs("debug_screenshots", exist_ok=True)
+        
         posts = get_posts()[:10]
         for post in posts:
             print(f"Processing post {post['id']}...")
             try:
-                self.open_notepad()
+                self.open_notepad(post_id=post['id'])
                 self.type_keys(["ctrl", "n"]) # Ensure new tab
                 self.write_post(post)
                 self.save_post(post)
@@ -24,7 +29,7 @@ class NotepadBot(DesktopBot):
             finally:
                 self.close_notepad()
                 
-    def open_notepad(self):
+    def open_notepad(self, post_id=None):
         self.show_desktop()
         handle_dialogs(self) # Handle any potential dialogs that might block opening
 
@@ -44,6 +49,13 @@ class NotepadBot(DesktopBot):
                 notepad = self.find(notepad_icon, matching=0.97, waiting_time=500)
                 if notepad:
                     print(f"Icon found: {notepad_icon}")
+                    
+                    """ # --- DELIVERABLE: Annotated Screenshot ---
+                    if post_id and attempt == 1: # Only save for the first success to avoid spam
+                        #commented now for it is only for debugging
+                        self.save_annotated_screenshot(notepad, f"post_{post_id}_icon_grounding.png")
+                    # ----------------------------------------- """
+
                     self.move()
                     self.click(clicks=2)
                     break
@@ -54,6 +66,7 @@ class NotepadBot(DesktopBot):
             sleep(1) # 1s delay between attempts
 
         if not notepad: #if notepad not found, try to open it using run command
+            print("[WARN] Icon not found after 3 attempts. Fallback to Run command.")
             self.type_keys(["win", "r"])
             self.type_keys("notepad")
             self.key_enter()
@@ -63,6 +76,42 @@ class NotepadBot(DesktopBot):
             raise Exception("Failed to open Notepad: Window not found within timeout.")
 
         handle_dialogs(self)
+
+    def save_annotated_screenshot(self, region, filename):
+        """Captures screen and draws a rectangle around the found region."""
+        try:
+            # Save raw screenshot
+            raw_path = os.path.join("debug_screenshots", "temp_raw.png")
+            self.save_screenshot(raw_path)
+            
+            # Load with OpenCV
+            screenshot = cv2.imread(raw_path)
+            if screenshot is None:
+                print("[WARN] Failed to load screenshot for annotation.")
+                return
+
+            # Region is (left, top, width, height)
+            x, y, w, h = region
+            
+            # Draw rectangle (Green, thickness 2)
+            cv2.rectangle(screenshot, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            
+            # Add text
+            cv2.putText(screenshot, "Notepad Icon Grounded", (x, y - 10), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            
+            # Save final
+            path = os.path.join("debug_screenshots", filename)
+            cv2.imwrite(path, screenshot)
+            print(f"[DEBUG] Saved annotated screenshot to {path}")
+            
+            # Cleanup temp
+            if os.path.exists(raw_path):
+                os.remove(raw_path)
+                
+        except Exception as e:
+            print(f"[WARN] Failed to save annotated screenshot: {e}")
+
     def wait_for_notepad_window(self, timeout=10):
         """Wait for Notepad window to appear, handling potential error dialogs."""
         print("Waiting for Notepad to open...")
