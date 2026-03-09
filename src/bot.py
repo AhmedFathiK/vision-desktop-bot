@@ -11,7 +11,7 @@ class NotepadBot(DesktopBot):
 
     def start(self):
         self.load_images()
-        posts = get_posts()[:5]
+        posts = get_posts()[:10]
         for post in posts:
             print(f"Processing post {post['id']}...")
             try:
@@ -34,12 +34,25 @@ class NotepadBot(DesktopBot):
 
         #loop through all notepad icons (priorating medium icon), in case the above keys failed
         notepad_icons = ("notepad_medium", "notepad_small", "notepad_large")
-        for notepad_icon in notepad_icons:
-            notepad = self.find(notepad_icon, matching=0.97, waiting_time=3000)
+        notepad = None
+        
+        # Retry logic: 3 attempts with 1s delay
+        for attempt in range(1, 4):
+            print(f"Searching for Notepad icon (Attempt {attempt}/3)...")
+            for notepad_icon in notepad_icons:
+                # Use short wait time since we are looping
+                notepad = self.find(notepad_icon, matching=0.97, waiting_time=500)
+                if notepad:
+                    print(f"Icon found: {notepad_icon}")
+                    self.move()
+                    self.click(clicks=2)
+                    break
+            
             if notepad:
-                self.move()
-                self.click(clicks=2)
                 break
+            
+            sleep(1) # 1s delay between attempts
+
         if not notepad: #if notepad not found, try to open it using run command
             self.type_keys(["win", "r"])
             self.type_keys("notepad")
