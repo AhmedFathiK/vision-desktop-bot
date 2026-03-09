@@ -58,13 +58,25 @@ def handle_unknown_dialogs(bot):
             return
 
         # Check if the active window is NOT the main Notepad window
-        # Notepad titles usually contain " - Notepad" or are just "Notepad" (when empty)
-
-        is_notepad = " - Notepad" in active_window.title or active_window.title == "Notepad"
+        # Notepad titles usually contain " - Notepad" (e.g., "Untitled - Notepad")
+        # Exact "Notepad" title is typically a dialog (Error, Save prompt, About)
+        is_main_notepad = " - Notepad" in active_window.title
         
-        if not is_notepad:
+        if not is_main_notepad:
             print(f"[WARN] Unexpected active window detected: '{active_window.title}'")
             
+            # Special handling for "Notepad" dialogs (likely "Do you want to save?" or errors)
+            if active_window.title == "Notepad":
+                print("Likely 'Do you want to save?' dialog. Attempting 'Don't Save' (Alt+N)...")
+                bot.type_keys(["alt", "n"])
+                sleep(1)
+                
+                # Check if gone
+                active_window = gw.getActiveWindow()
+                if not active_window or " - Notepad" in active_window.title:
+                    print("[INFO] Successfully dismissed 'Notepad' dialog.")
+                    return
+
             # Try to interact with it to bypass/close
             # Strategy 1: Press Enter (Common for "OK", "Yes", "Save", "Confirm")
             print("Attempting to bypass with Enter...")
@@ -73,9 +85,9 @@ def handle_unknown_dialogs(bot):
             
             # Check if still stuck on a non-Notepad window
             active_window = gw.getActiveWindow()
-            is_notepad = active_window and (" - Notepad" in active_window.title or active_window.title == "Notepad")
+            is_main_notepad = active_window and (" - Notepad" in active_window.title)
             
-            if not is_notepad:
+            if not is_main_notepad:
                 # Strategy 2: Press Esc (Common for "Cancel", "Close")
                 print("Enter failed. Attempting to dismiss with Esc...")
                 bot.key_esc()
@@ -83,7 +95,7 @@ def handle_unknown_dialogs(bot):
                 
             # Verify if we are back to Notepad
             active_window = gw.getActiveWindow()
-            if active_window and (" - Notepad" in active_window.title or active_window.title == "Notepad"):
+            if active_window and (" - Notepad" in active_window.title):
                 print("[INFO] Successfully returned focus to Notepad.")
             else:
                 print("[ERROR] Failed to dismiss unexpected dialog. Manual intervention may be required.")
