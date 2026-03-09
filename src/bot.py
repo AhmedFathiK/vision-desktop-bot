@@ -59,6 +59,7 @@ class NotepadBot(DesktopBot):
 
                     self.move()
                     self.click(clicks=2)
+                    self.mouse_move(500, 500) # Move mouse away to prevent tooltip
                     break
             
             if notepad:
@@ -192,6 +193,7 @@ class NotepadBot(DesktopBot):
     def write_post(self, post):
         self.get_notepad_window()
         self.paste(f"Title: {post['title']}")
+        sleep(0.5) # Wait for paste to complete
         self.key_enter()
         self.key_enter()
         self.paste(post["body"])
