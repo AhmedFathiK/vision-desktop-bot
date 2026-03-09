@@ -214,6 +214,10 @@ class NotepadBot(DesktopBot):
             if not active_window:
                 return
 
+            # Ignore windows with empty titles or known system windows (e.g., Desktop/Taskbar)
+            if not active_window.title or active_window.title in ["Program Manager", "Task Switching"]:
+                return
+
             # Check if the active window is NOT the main Notepad window
             # Notepad titles usually contain " - Notepad" or are just "Notepad" (when empty)
 
