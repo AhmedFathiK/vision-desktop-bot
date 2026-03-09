@@ -1,6 +1,7 @@
 from botcity.core import DesktopBot
 from api import get_posts
 from utils import get_resource_path
+from dialogs import handle_dialogs
 import pygetwindow as gw
 import os
 import time
@@ -20,7 +21,7 @@ class NotepadBot(DesktopBot):
                 
     def open_notepad(self):
         self.show_desktop()
-        self.handle_dialogs() # Handle any potential dialogs that might block opening
+        handle_dialogs(self) # Handle any potential dialogs that might block opening
 
         #this is to force using medium icons on desktop
         self.type_keys(["ctrl", "shift", "3"])
@@ -43,7 +44,7 @@ class NotepadBot(DesktopBot):
         if not self.wait_for_notepad_window(timeout=10):
             raise Exception("Failed to open Notepad: Window not found within timeout.")
 
-        self.handle_dialogs()
+        handle_dialogs(self)
     def wait_for_notepad_window(self, timeout=10):
         """Wait for Notepad window to appear, handling potential error dialogs."""
         print("Waiting for Notepad to open...")
@@ -97,7 +98,7 @@ class NotepadBot(DesktopBot):
                 self.type_keys(["ctrl", "w"])
                 sleep(0.5)
                 # Delegate to the centralized dialog handler
-                self.handle_dialogs()
+                handle_dialogs(self)
             except Exception as e:
                 print(f"Error closing tab: {e}")
                 break
@@ -143,7 +144,7 @@ class NotepadBot(DesktopBot):
         
         # Wait a moment for potential "Confirm Save As" dialog
         sleep(1)
-        self.handle_dialogs() # This will handle confirm overwrite if exists using the modular handler
+        handle_dialogs(self) # This will handle confirm overwrite if exists using the modular handler
 
     def wait_for_window(self, title, timeout=10):
         """Wait for a window with specific title to appear."""
@@ -163,91 +164,3 @@ class NotepadBot(DesktopBot):
         folder = os.path.join(os.path.expanduser("~"), "Desktop", "tjm-project")
         os.makedirs(folder, exist_ok=True)
         return folder
-
-    def handle_dialogs(self):
-        """
-        Dispatcher method to handle known and unknown dialogs.
-        """
-        # 1. Handle "Cannot find file" dialog (known)
-        if self.handle_cant_find_file_dialog():
-            return
-            
-        # 2. Handle "Confirm Save As" dialog (known)
-        if self.handle_confirm_save_as_dialog():
-            return
-
-        # 3. Handle unknown/generic dialogs
-        self.handle_unknown_dialogs()
-
-    def handle_cant_find_file_dialog(self):
-        """Handles the 'Cannot find file' dialog using image recognition."""
-        if self.find("cant_find_file_dialog_dark", matching=0.97, waiting_time=500):
-            print("[INFO] Detected 'Cannot find file' dialog (Dark). Dismissing...")
-            self.key_enter()
-            return True
-        elif self.find("cant_find_file_dialog_light", matching=0.97, waiting_time=500):
-            print("[INFO] Detected 'Cannot find file' dialog (Light). Dismissing...")
-            self.key_enter()
-            return True
-        return False
-
-    def handle_confirm_save_as_dialog(self):
-        """Handles the 'Confirm Save As' dialog by checking window title."""
-        windows = gw.getWindowsWithTitle("Confirm Save As")
-        if windows:
-            print("[INFO] Detected 'Confirm Save As' dialog. Confirming...")
-            windows[0].activate()
-            self.type_keys(["alt", "y"])
-            return True
-        return False
-
-    def handle_unknown_dialogs(self):
-        """
-        Handles any unexpected dialogs by checking if the active window is NOT the main Notepad window.
-        Attempts to bypass them by pressing Enter or Esc.
-        """
-        try:
-            # Wait a brief moment to allow any potential dialog to appear and gain focus
-            sleep(0.5)
-            
-            active_window = gw.getActiveWindow()
-            if not active_window:
-                return
-
-            # Ignore windows with empty titles or known system windows (e.g., Desktop/Taskbar)
-            if not active_window.title or active_window.title in ["Program Manager", "Task Switching"]:
-                return
-
-            # Check if the active window is NOT the main Notepad window
-            # Notepad titles usually contain " - Notepad" or are just "Notepad" (when empty)
-
-            is_notepad = " - Notepad" in active_window.title or active_window.title == "Notepad"
-            
-            if not is_notepad:
-                print(f"[WARN] Unexpected active window detected: '{active_window.title}'")
-                
-                # Try to interact with it to bypass/close
-                # Strategy 1: Press Enter (Common for "OK", "Yes", "Save", "Confirm")
-                print("Attempting to bypass with Enter...")
-                self.key_enter()
-                sleep(1)
-                
-                # Check if still stuck on a non-Notepad window
-                active_window = gw.getActiveWindow()
-                is_notepad = active_window and (" - Notepad" in active_window.title or active_window.title == "Notepad")
-                
-                if not is_notepad:
-                    # Strategy 2: Press Esc (Common for "Cancel", "Close")
-                    print("Enter failed. Attempting to dismiss with Esc...")
-                    self.key_esc()
-                    sleep(1)
-                    
-                # Verify if we are back to Notepad
-                active_window = gw.getActiveWindow()
-                if active_window and (" - Notepad" in active_window.title or active_window.title == "Notepad"):
-                    print("[INFO] Successfully returned focus to Notepad.")
-                else:
-                    print("[ERROR] Failed to dismiss unexpected dialog. Manual intervention may be required.")
-                    
-        except Exception as e:
-            print(f"[ERROR] Error handling dialogs: {e}")
