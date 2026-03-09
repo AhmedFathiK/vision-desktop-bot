@@ -80,8 +80,22 @@ class NotepadBot(DesktopBot):
         return False
 
     def close_notepad(self):
-        self.get_notepad_window()
-        self.type_keys(["ctrl", "shift", "w"])
+        """Close Notepad tabs one by one using Ctrl+W until the window is gone."""
+        print("Closing Notepad tabs...")
+        while True:
+            # Check if Notepad is still open
+            windows = gw.getWindowsWithTitle(" - Notepad")
+            if not windows:
+                break
+            
+            try:
+                win = windows[0]
+                win.activate()
+                self.type_keys(["ctrl", "w"])
+                sleep(0.5)
+            except Exception as e:
+                print(f"Error closing tab: {e}")
+                break
 
     def load_images(self):
         images_path = get_resource_path("images")
