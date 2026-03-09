@@ -21,7 +21,8 @@ class NotepadBot(DesktopBot):
             print(f"Processing post {post['id']}...")
             try:
                 self.open_notepad(post_id=post['id'])
-                self.type_keys(["ctrl", "n"]) # Ensure new tab
+                self.type_keys(["ctrl", "a"]) # Select all content
+                self.type_keys(["backspace"]) # Clear content
                 self.write_post(post)
                 self.save_post(post)
             except Exception as e:
