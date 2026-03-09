@@ -65,6 +65,20 @@ def handle_unknown_dialogs(bot):
         if not is_main_notepad:
             print(f"[WARN] Unexpected active window detected: '{active_window.title}'")
             
+            # Attempt to bring Notepad back to focus first
+            # The user might have just switched windows (Alt+Tab)
+            notepad_windows = gw.getWindowsWithTitle(" - Notepad")
+            if notepad_windows:
+                print("Notepad window found in background. Attempting to switch back...")
+                try:
+                    notepad_windows[0].activate()
+                    sleep(0.5)
+                    if " - Notepad" in gw.getActiveWindow().title:
+                        print("[INFO] Successfully switched back to Notepad.")
+                        return
+                except Exception as e:
+                    print(f"Could not activate Notepad directly (might be blocked by dialog): {e}")
+
             # Special handling for "Notepad" dialogs (likely "Do you want to save?" or errors)
             if active_window.title == "Notepad":
                 print("Likely 'Do you want to save?' dialog. Attempting 'Don't Save' (Alt+N)...")
