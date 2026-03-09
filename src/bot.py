@@ -93,6 +93,11 @@ class NotepadBot(DesktopBot):
                 win.activate()
                 self.type_keys(["ctrl", "w"])
                 sleep(0.5)
+                # Check for "Cannot find file" dialog (dark/light)
+                if self.find("cant_find_file_dialog_dark", matching=0.97, waiting_time=500):
+                    self.key_enter()
+                elif self.find("cant_find_file_dialog_light", matching=0.97, waiting_time=500):
+                    self.key_enter()
             except Exception as e:
                 print(f"Error closing tab: {e}")
                 break
@@ -102,6 +107,8 @@ class NotepadBot(DesktopBot):
         self.add_image("notepad_small", os.path.join(images_path, "notepad-small.png"))
         self.add_image("notepad_medium", os.path.join(images_path, "notepad-medium.png"))
         self.add_image("notepad_large", os.path.join(images_path, "notepad-large.png"))
+        self.add_image("cant_find_file_dialog_dark", os.path.join(images_path, "cant_find_file_dialog_dark.png"))
+        self.add_image("cant_find_file_dialog_light", os.path.join(images_path, "cant_find_file_dialog_light.png"))
 
     def show_desktop(self):
         self.type_keys(["win", "d"])
