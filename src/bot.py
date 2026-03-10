@@ -216,7 +216,13 @@ class NotepadBot(DesktopBot):
 
         # Ensure we are focused on the file name input
         self.paste(os.path.join(self.get_target_folder(), f"post_{post['id']}.txt"))
-        self.key_enter()
+        sleep(0.5) # Wait for paste to complete
+
+        # Ensure focus is still on Save As dialog before pressing Enter
+        if self.wait_for_window("Save As", timeout=2):
+            self.key_enter()
+        else:
+            print("[WARN] 'Save As' dialog lost focus or closed unexpectedly.")
         
         # Wait a moment for potential "Confirm Save As" dialog
         sleep(1)
