@@ -194,8 +194,14 @@ class NotepadBot(DesktopBot):
         self.get_notepad_window()
         self.paste(f"Title: {post['title']}")
         sleep(0.5) # Wait for paste to complete
+        
+        # Re-focus before Enter to handle potential interruptions
+        self.get_notepad_window()
         self.key_enter()
         self.key_enter()
+        
+        # Re-focus before Body paste to handle potential interruptions
+        self.get_notepad_window()
         self.paste(post["body"])
         
     def save_post(self, post):
