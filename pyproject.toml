@@ -3,7 +3,7 @@ name = "vision-desktop-bot"
 version = "0.1.0"
 description = "Vision-based desktop automation bot for Notepad"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 
 dependencies = [
     "botcity_framework_base==0.4.4",

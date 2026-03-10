@@ -198,7 +198,9 @@ class NotepadBot(DesktopBot):
         # Re-focus before Enter to handle potential interruptions
         self.get_notepad_window()
         self.key_enter()
+        sleep(0.5)
         self.key_enter()
+        sleep(0.5)
         
         # Re-focus before Body paste to handle potential interruptions
         self.get_notepad_window()
