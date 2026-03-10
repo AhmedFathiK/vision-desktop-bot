@@ -155,7 +155,10 @@ class NotepadBot(DesktopBot):
     def close_notepad(self):
         """Close Notepad tabs one by one using Ctrl+W until the window is gone."""
         print("Closing Notepad tabs...")
-        while True:
+        max_attempts = 10  # Safety break
+        attempts = 0
+        
+        while attempts < max_attempts:
             # Check if Notepad is still open
             windows = gw.getWindowsWithTitle(" - Notepad")
             if not windows:
@@ -166,11 +169,20 @@ class NotepadBot(DesktopBot):
                 win.activate()
                 self.type_keys(["ctrl", "w"])
                 sleep(0.5)
+                
                 # Delegate to the centralized dialog handler
+                # It handles "Do you want to save?" and other dialogs
                 handle_dialogs(self)
+                
             except Exception as e:
                 print(f"Error closing tab: {e}")
-                break
+                sleep(1)
+            
+            attempts += 1
+        
+        if attempts >= max_attempts:
+             print("[WARN] Failed to close all Notepad tabs gracefully. Force killing process...")
+             os.system("taskkill /f /im notepad.exe")
 
     def load_images(self):
         images_path = get_resource_path("images")
