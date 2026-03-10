@@ -51,11 +51,11 @@ class NotepadBot(DesktopBot):
                 if notepad:
                     print(f"Icon found: {notepad_icon}")
                     
-                    """ # --- DELIVERABLE: Annotated Screenshot ---
+                    # --- DELIVERABLE: Annotated Screenshot ---
                     if post_id and attempt == 1: # Only save for the first success to avoid spam
                         #commented now for it is only for debugging
                         self.save_annotated_screenshot(notepad, f"post_{post_id}_icon_grounding.png")
-                    # ----------------------------------------- """
+                    # -----------------------------------------
 
                     self.move()
                     self.click(clicks=2)
