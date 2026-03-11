@@ -167,11 +167,10 @@ class NotepadBot(DesktopBot):
                 vlm_bbox = self.find_icon_with_vlm("Notepad.exe - Shortcut")
                 if vlm_bbox:
                     logging.info(f"[VLM] Icon found at: {vlm_bbox}")
-                    notepad = vlm_bbox
                     if post_id:
-                        self.save_annotated_screenshot(notepad, f"post_{post_id}_icon_grounding.png")
+                        self.save_annotated_screenshot(vlm_bbox, f"post_{post_id}_icon_grounding.png")
                     
-                    x, y, w, h = notepad
+                    x, y, w, h = vlm_bbox
                     center_x = x + w // 2
                     center_y = y + h // 2
                     
@@ -179,38 +178,54 @@ class NotepadBot(DesktopBot):
                     pyautogui.moveTo(center_x, center_y)
                     sleep(0.3)
                     pyautogui.doubleClick(center_x, center_y)
-                    
-                    logging.info(f"[VLM] Icon clicked at: {center_x}, {center_y}")
-                    logging.info("Notepad opened via VLM Grounding")
                     self.mouse_move(500, 500)
+                    
+                    # Verify if it actually opened
+                    if self.wait_for_notepad_window(timeout=5):
+                        logging.info("Notepad opened via VLM Grounding")
+                        handle_dialogs(self)
+                        return
+                    else:
+                        logging.warning("VLM click failed to open Notepad. Falling back to Template Matching...")
+
             except Exception as e:
                 logging.warning(f"VLM interaction failed: {e}")
 
-            # FALLBACK: only run if VLM didn't find anything
-            if not notepad:
-                for notepad_icon in notepad_icons:
-                    notepad = self.find(notepad_icon, matching=0.97, waiting_time=500)
-                    if notepad:
-                        logging.info(f"Icon found: {notepad_icon}")
-                        if post_id:
-                            self.save_annotated_screenshot(notepad, f"post_{post_id}_icon_grounding.png")
+            # FALLBACK: Template Matching
+            found_template = False
+            for notepad_icon in notepad_icons:
+                notepad = self.find(notepad_icon, matching=0.97, waiting_time=500)
+                if notepad:
+                    logging.info(f"Icon found: {notepad_icon}")
+                    if post_id:
+                        self.save_annotated_screenshot(notepad, f"post_{post_id}_icon_grounding.png")
+                    
+                    self.move()
+                    self.click(clicks=2)
+                    self.mouse_move(500, 500)
+                    
+                    # Verify if it actually opened
+                    if self.wait_for_notepad_window(timeout=5):
                         logging.info(f"Notepad opened via Template Matching: {notepad_icon}")
-                        self.move()
-                        self.click(clicks=2)
-                        self.mouse_move(500, 500)
-                        break
+                        handle_dialogs(self)
+                        return
+                    else:
+                         logging.warning(f"Template matching {notepad_icon} click failed to open Notepad.")
+                    
+                    found_template = True
+                    break
 
-            if notepad:
-                break
+            if not found_template:
+                logging.info("Template matching did not find icon.")
             
             sleep(1)
 
-        if not notepad: #if notepad not found, try to open it using run command
-            logging.warning("Icon not found after 3 attempts. Fallback to Run command.")
-            logging.info("Notepad opened via Run Command (Fallback)")
-            self.type_keys(["win", "r"])
-            self.type_keys("notepad")
-            self.key_enter()
+        # FINAL FALLBACK: Run Command
+        logging.warning("Icon not found or failed to open after 3 attempts. Fallback to Run command.")
+        logging.info("Notepad opened via Run Command (Fallback)")
+        self.type_keys(["win", "r"])
+        self.type_keys("notepad")
+        self.key_enter()
             
         # Validate that Notepad actually opened
         if not self.wait_for_notepad_window(timeout=10):
