@@ -1,5 +1,6 @@
 # src/api.py
 import requests
+import logging
 from time import sleep
 
 headers = {
@@ -17,22 +18,25 @@ def get_posts(url=None, max_retries=3, delay=2):
             response = requests.get(url, headers=headers, timeout=10)
             response.raise_for_status()
 
-            print(f"[INFO] Successfully fetched posts on attempt {attempt}")
+            logging.info(f"Successfully fetched posts on attempt {attempt}")
             return response.json()
 
         except requests.exceptions.RequestException as e:
-            print(f"[WARN] Attempt {attempt} failed: {e}")
+            logging.warning(f"Attempt {attempt} failed: {e}")
 
             if attempt < max_retries:
                 sleep(delay)
             else:
-                print("[ERROR] Max retries reached")
+                logging.error("Max retries reached")
                 return []
 
 if __name__ == "__main__":
+    # Configure logging for standalone testing
+    logging.basicConfig(level=logging.INFO)
+    
     posts = get_posts()
 
-    print(f"Number of posts fetched: {len(posts)}")
+    logging.info(f"Number of posts fetched: {len(posts)}")
 
     if posts:
-        print(f"First post title: {posts[0]['title']}...")
+        logging.info(f"First post title: {posts[0]['title']}...")

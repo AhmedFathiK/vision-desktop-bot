@@ -9,8 +9,11 @@ dependencies = [
     "botcity_framework_base==0.4.4",
     "botcity_framework_core==1.3.0",
     "botcity_maestro_sdk==0.9.0",
+    "google-genai>=1.66.0",
     "numpy==2.4.3",
     "opencv_python==4.13.0.92",
+    "pyautogui>=0.9.54",
     "pygetwindow==0.0.9",
-    "requests==2.32.5"
+    "python-dotenv>=1.2.2",
+    "requests==2.32.5",
 ]
